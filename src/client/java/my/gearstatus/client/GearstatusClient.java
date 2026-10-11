@@ -33,11 +33,11 @@ public class GearstatusClient implements ClientModInitializer {
         int height = mc.getWindow().getGuiScaledHeight();
         Font font = mc.font;
 
-        // ترتيب عمودي فخم على يسار الشاشة بعيداً تماماً عن الـ Hotbar واليد اليسرى
+        // عمودي 100% في منتصف يسار الشاشة (مستحيل يلمس حافة الشاشة أو الـ Hotbar)
         int startX = 6;
-        int startY = height / 2 - 50; // متمركز بنصف الشاشة عمودياً
+        int startY = (height / 2) - 50;
 
-        EquipmentSlot[] slots = {
+        EquipmentSlot[] armorSlots = {
             EquipmentSlot.HEAD,
             EquipmentSlot.CHEST,
             EquipmentSlot.LEGS,
@@ -47,22 +47,22 @@ public class GearstatusClient implements ClientModInitializer {
         int currentY = startY;
 
         // 1. رسم الدروع الأربعة عمودياً
-        for (EquipmentSlot slot : slots) {
+        for (EquipmentSlot slot : armorSlots) {
             ItemStack armor = mc.player.getItemBySlot(slot);
             if (!armor.isEmpty()) {
-                drawArmorWidget(graphics, font, armor, startX, currentY);
-                currentY += 21; // مسافة عمودية كافية وأنيقة
+                drawVerticalWidget(graphics, font, armor, startX, currentY);
+                currentY += 21; // مسافة عمودية كافية لكل سطر
             }
         }
 
-        // 2. رسم السلاح أو الأداة الممسوكة باليد
+        // 2. رسم السلاح أو الأداة باليد اليمنى في السطر الخامس عمودياً
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!mainHand.isEmpty()) {
-            drawArmorWidget(graphics, font, mainHand, startX, currentY);
+            drawVerticalWidget(graphics, font, mainHand, startX, currentY);
         }
     }
 
-    private static void drawArmorWidget(
+    private static void drawVerticalWidget(
         GuiGraphicsExtractor g,
         Font font,
         ItemStack stack,
@@ -72,7 +72,7 @@ public class GearstatusClient implements ClientModInitializer {
         if (stack.isEmpty()) return;
 
         int percent = 100;
-        int glowColor = 0xFF55FF55; // أخضر افتراضي
+        int glowColor = 0xFF55FF55;
         String label = "";
 
         if (stack.isDamageableItem()) {
@@ -97,34 +97,31 @@ public class GearstatusClient implements ClientModInitializer {
             glowColor = 0xFFE0E0E0;
         }
 
-        // 1. رسم Glow Frame ناعم وأنيق حول مجسم الدرع
+        // 1. رسم Glow Frame ناعم حول مجسم الأداة
         drawGlowFrame(g, x - 1, y - 1, 18, 18, glowColor);
 
-        // 2. رسم مجسم الدرع نفسه ثلاثي الأبعاد
+        // 2. رسم مجسم الأداة
         g.item(stack, x, y);
 
-        // 3. كتابة النسبة المئوية على يمين الأيقونة بوضوح
+        // 3. كتابة النسبة بجانب الأيقونة على اليمين بوضوح
         if (!label.isEmpty()) {
-            g.centeredText(font, Component.literal(label), x + 30, y + 5, glowColor);
+            g.centeredText(font, Component.literal(label), x + 34, y + 5, glowColor);
         }
     }
 
-    // رسم إطار توهج نيون ناعم بخطوط متوهجة
     private static void drawGlowFrame(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
         int alpha = (color >> 24) & 0xFF;
         int rgb = color & 0xFFFFFF;
 
-        // خلفية خفيفة جداً شفافة
         int fillAlpha = (alpha * 35) / 255;
         g.fill(x, y, x + w, y + h, (fillAlpha << 24) | 0x0A0F1D);
 
-        // حدود التوهج الخارجية
         int borderAlpha = (alpha * 180) / 255;
         int borderColor = (borderAlpha << 24) | rgb;
 
-        g.fill(x, y, x + w, y + 1, borderColor);         // أعلى
-        g.fill(x, y + h - 1, x + w, y + h, borderColor); // أسفل
-        g.fill(x, y, x + 1, y + h, borderColor);         // يسار
-        g.fill(x + w - 1, y, x + w, y + h, borderColor); // يمين
+        g.fill(x, y, x + w, y + 1, borderColor);
+        g.fill(x, y + h - 1, x + w, y + h, borderColor);
+        g.fill(x, y, x + 1, y + h, borderColor);
+        g.fill(x + w - 1, y, x + w, y + h, borderColor);
     }
 }

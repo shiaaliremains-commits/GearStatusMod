@@ -30,12 +30,14 @@ public class GearstatusClient implements ClientModInitializer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.isSpectator()) return;
 
+        int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
         Font font = mc.font;
 
-        // عمودي 100% في منتصف يسار الشاشة (مستحيل يلمس حافة الشاشة أو الـ Hotbar)
-        int startX = 6;
-        int startY = (height / 2) - 50;
+        // موقع عمودي آمن ومثالي: يسار الـ Hotbar مع مسافة كافية لعدم لمس اليد اليسرى
+        int hotbarLeft = width / 2 - 91;
+        int x = Math.max(10, hotbarLeft - 68);
+        int baseY = height - 20;
 
         EquipmentSlot[] armorSlots = {
             EquipmentSlot.HEAD,
@@ -44,25 +46,26 @@ public class GearstatusClient implements ClientModInitializer {
             EquipmentSlot.FEET
         };
 
-        int currentY = startY;
+        // نبدأ من الأعلى وننزل عمودياً لكل قطعة
+        int currentY = baseY - (4 * 19);
 
         // 1. رسم الدروع الأربعة عمودياً
         for (EquipmentSlot slot : armorSlots) {
             ItemStack armor = mc.player.getItemBySlot(slot);
             if (!armor.isEmpty()) {
-                drawVerticalWidget(graphics, font, armor, startX, currentY);
-                currentY += 21; // مسافة عمودية كافية لكل سطر
+                drawSlotWidget(graphics, font, armor, x, currentY);
             }
+            currentY += 19;
         }
 
-        // 2. رسم السلاح أو الأداة باليد اليمنى في السطر الخامس عمودياً
+        // 2. رسم السلاح أو الأداة باليد في السطر الأخير بمحاذاة الـ Hotbar
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!mainHand.isEmpty()) {
-            drawVerticalWidget(graphics, font, mainHand, startX, currentY);
+            drawSlotWidget(graphics, font, mainHand, x, baseY);
         }
     }
 
-    private static void drawVerticalWidget(
+    private static void drawSlotWidget(
         GuiGraphicsExtractor g,
         Font font,
         ItemStack stack,
@@ -97,31 +100,23 @@ public class GearstatusClient implements ClientModInitializer {
             glowColor = 0xFFE0E0E0;
         }
 
-        // 1. رسم Glow Frame ناعم حول مجسم الأداة
-        drawGlowFrame(g, x - 1, y - 1, 18, 18, glowColor);
+        // 1. رسم إطار نيون ناعم وأنيق حول الأيقونة
+        drawGlowBorder(g, x, y, glowColor);
 
         // 2. رسم مجسم الأداة
         g.item(stack, x, y);
 
-        // 3. كتابة النسبة بجانب الأيقونة على اليمين بوضوح
+        // 3. كتابة النسبة على يمين الأيقونة بوضوح تام وبارتفاع متناسق
         if (!label.isEmpty()) {
-            g.centeredText(font, Component.literal(label), x + 34, y + 5, glowColor);
+            g.centeredText(font, Component.literal(label), x + 28, y + 5, glowColor);
         }
     }
 
-    private static void drawGlowFrame(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
-        int alpha = (color >> 24) & 0xFF;
-        int rgb = color & 0xFFFFFF;
-
-        int fillAlpha = (alpha * 35) / 255;
-        g.fill(x, y, x + w, y + h, (fillAlpha << 24) | 0x0A0F1D);
-
-        int borderAlpha = (alpha * 180) / 255;
-        int borderColor = (borderAlpha << 24) | rgb;
-
-        g.fill(x, y, x + w, y + 1, borderColor);
-        g.fill(x, y + h - 1, x + w, y + h, borderColor);
-        g.fill(x, y, x + 1, y + h, borderColor);
-        g.fill(x + w - 1, y, x + w, y + h, borderColor);
+    // إطار نيون محيط بالقطعة بدقة 1 بكسل بدون أي تشويه
+    private static void drawGlowBorder(GuiGraphicsExtractor g, int x, int y, int color) {
+        g.fill(x - 1, y - 1, x + 17, y, color);         // أعلى
+        g.fill(x - 1, y + 16, x + 17, y + 17, color);   // أسفل
+        g.fill(x - 1, y - 1, x, y + 17, color);         // يسار
+        g.fill(x + 16, y - 1, x + 17, y + 17, color);   // يمين
     }
 }

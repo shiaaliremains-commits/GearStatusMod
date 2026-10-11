@@ -34,34 +34,27 @@ public class GearstatusClient implements ClientModInitializer {
         int height = mc.getWindow().getGuiScaledHeight();
         Font font = mc.font;
 
-        // موقع عمودي آمن ومثالي: يسار الـ Hotbar مع مسافة كافية لعدم لمس اليد اليسرى
         int hotbarLeft = width / 2 - 91;
-        int x = Math.max(10, hotbarLeft - 68);
-        int baseY = height - 20;
+        int hotbarRight = width / 2 + 91;
+        int baseY = height - 22; // يطابق ارتفاع الـ Hotbar بالملي
 
-        EquipmentSlot[] armorSlots = {
-            EquipmentSlot.HEAD,
-            EquipmentSlot.CHEST,
-            EquipmentSlot.LEGS,
-            EquipmentSlot.FEET
-        };
+        // مسافة أمان لعدم التداخل مع خانة اليد اليسرى إذا كانت ممتلئة
+        boolean hasOffhand = !mc.player.getOffhandItem().isEmpty();
+        int leftBase = hasOffhand ? (hotbarLeft - 32) : (hotbarLeft - 6);
+        int leftStart = leftBase - 44;
 
-        // نبدأ من الأعلى وننزل عمودياً لكل قطعة
-        int currentY = baseY - (4 * 19);
+        // 1. الجهة اليسرى: الخوذة والدرع
+        drawSlotWidget(graphics, font, mc.player.getItemBySlot(EquipmentSlot.HEAD), leftStart, baseY);
+        drawSlotWidget(graphics, font, mc.player.getItemBySlot(EquipmentSlot.CHEST), leftStart + 22, baseY);
 
-        // 1. رسم الدروع الأربعة عمودياً
-        for (EquipmentSlot slot : armorSlots) {
-            ItemStack armor = mc.player.getItemBySlot(slot);
-            if (!armor.isEmpty()) {
-                drawSlotWidget(graphics, font, armor, x, currentY);
-            }
-            currentY += 19;
-        }
+        // 2. الجهة اليمنى: البنطلون والحذاء والسلاح
+        int rightStart = hotbarRight + 6;
+        drawSlotWidget(graphics, font, mc.player.getItemBySlot(EquipmentSlot.LEGS), rightStart, baseY);
+        drawSlotWidget(graphics, font, mc.player.getItemBySlot(EquipmentSlot.FEET), rightStart + 22, baseY);
 
-        // 2. رسم السلاح أو الأداة باليد في السطر الأخير بمحاذاة الـ Hotbar
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!mainHand.isEmpty()) {
-            drawSlotWidget(graphics, font, mainHand, x, baseY);
+            drawSlotWidget(graphics, font, mainHand, rightStart + 44, baseY);
         }
     }
 
@@ -100,23 +93,26 @@ public class GearstatusClient implements ClientModInitializer {
             glowColor = 0xFFE0E0E0;
         }
 
-        // 1. رسم إطار نيون ناعم وأنيق حول الأيقونة
-        drawGlowBorder(g, x, y, glowColor);
+        // 1. رسم إطار التوهج Glow Frame
+        drawGlowBorder(g, x, y, 20, 20, glowColor);
 
-        // 2. رسم مجسم الأداة
-        g.item(stack, x, y);
+        // 2. رسم مجسم الأداة بداخل الإطار
+        g.item(stack, x + 2, y + 2);
 
-        // 3. كتابة النسبة على يمين الأيقونة بوضوح تام وبارتفاع متناسق
+        // 3. كتابة النسبة المئوية فوق الأيقونة (مستحيل تنزل تحت الشاشة نهائياً)
         if (!label.isEmpty()) {
-            g.centeredText(font, Component.literal(label), x + 28, y + 5, glowColor);
+            g.centeredText(font, Component.literal(label), x + 10, y - 9, glowColor);
         }
     }
 
-    // إطار نيون محيط بالقطعة بدقة 1 بكسل بدون أي تشويه
-    private static void drawGlowBorder(GuiGraphicsExtractor g, int x, int y, int color) {
-        g.fill(x - 1, y - 1, x + 17, y, color);         // أعلى
-        g.fill(x - 1, y + 16, x + 17, y + 17, color);   // أسفل
-        g.fill(x - 1, y - 1, x, y + 17, color);         // يسار
-        g.fill(x + 16, y - 1, x + 17, y + 17, color);   // يمين
+    private static void drawGlowBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
+        // خلفية خفيفة ناعمة
+        g.fill(x, y, x + w, y + h, 0x770A101D);
+
+        // حدود النيون المتوهجة
+        g.fill(x, y, x + w, y + 1, color);         // أعلى
+        g.fill(x, y + h - 1, x + w, y + h, color); // أسفل
+        g.fill(x, y, x + 1, y + h, color);         // يسار
+        g.fill(x + w - 1, y, x + w, y + h, color); // يمين
     }
 }

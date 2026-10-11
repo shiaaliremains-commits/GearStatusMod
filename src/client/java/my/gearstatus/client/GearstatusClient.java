@@ -30,55 +30,101 @@ public class GearstatusClient implements ClientModInitializer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.isSpectator()) return;
 
-        int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
         Font font = mc.font;
 
-        int hotbarLeft = width / 2 - 91;
-        int hotbarRight = width / 2 + 91;
-        int baseY = height - 20;
+        // ترتيب عمودي فخم على يسار الشاشة بعيداً تماماً عن الـ Hotbar واليد اليسرى
+        int startX = 6;
+        int startY = height / 2 - 50; // متمركز بنصف الشاشة عمودياً
 
-        // 1. الدروع العلوية يسار الـ Hotbar (خوذة + درع)
-        drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.HEAD), hotbarLeft - 56, baseY);
-        drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.CHEST), hotbarLeft - 26, baseY);
+        EquipmentSlot[] slots = {
+            EquipmentSlot.HEAD,
+            EquipmentSlot.CHEST,
+            EquipmentSlot.LEGS,
+            EquipmentSlot.FEET
+        };
 
-        // 2. الدروع السفلية يمين الـ Hotbar (بنطلون + بوت)
-        drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.LEGS), hotbarRight + 6, baseY);
-        drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.FEET), hotbarRight + 36, baseY);
+        int currentY = startY;
 
-        // 3. السلاح أو الأداة باليد اليمنى
+        // 1. رسم الدروع الأربعة عمودياً
+        for (EquipmentSlot slot : slots) {
+            ItemStack armor = mc.player.getItemBySlot(slot);
+            if (!armor.isEmpty()) {
+                drawArmorWidget(graphics, font, armor, startX, currentY);
+                currentY += 21; // مسافة عمودية كافية وأنيقة
+            }
+        }
+
+        // 2. رسم السلاح أو الأداة الممسوكة باليد
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!mainHand.isEmpty()) {
-            drawSlot(graphics, font, mainHand, hotbarRight + 66, baseY);
+            drawArmorWidget(graphics, font, mainHand, startX, currentY);
         }
     }
 
-    private static void drawSlot(GuiGraphicsExtractor g, Font font, ItemStack stack, int x, int y) {
+    private static void drawArmorWidget(
+        GuiGraphicsExtractor g,
+        Font font,
+        ItemStack stack,
+        int x,
+        int y
+    ) {
         if (stack.isEmpty()) return;
 
-        g.item(stack, x, y);
+        int percent = 100;
+        int glowColor = 0xFF55FF55; // أخضر افتراضي
+        String label = "";
 
         if (stack.isDamageableItem()) {
             int max = stack.getMaxDamage();
             int damage = stack.getDamageValue();
             int remaining = max - damage;
-            int percent = Math.max(0, Math.min(100, (int) ((remaining / (double) max) * 100)));
+            percent = Math.max(0, Math.min(100, (int) ((remaining / (double) max) * 100)));
 
-            int color;
             if (percent >= 75) {
-                color = 0xFF55FF55; // أخضر نيون
+                glowColor = 0xFF55FF55; // أخضر نيون
             } else if (percent >= 40) {
-                color = 0xFFFFFF55; // أصفر
+                glowColor = 0xFFFFFF55; // أصفر
             } else if (percent >= 20) {
-                color = 0xFFFFAA00; // برتقالي
+                glowColor = 0xFFFFAA00; // برتقالي
             } else {
-                boolean flash = (System.currentTimeMillis() / 250) % 2 == 0;
-                color = flash ? 0xFFFF2222 : 0xFFFF8888; // نبض أحمر تحذيري
+                boolean flash = (System.currentTimeMillis() / 220) % 2 == 0;
+                glowColor = flash ? 0xFFFF2222 : 0xFFFF8888; // أحمر نابض
             }
-
-            g.centeredText(font, Component.literal(percent + "%"), x + 8, y + 17, color);
+            label = percent + "%";
         } else if (stack.getCount() > 1) {
-            g.centeredText(font, Component.literal("x" + stack.getCount()), x + 8, y + 17, 0xFFE0E0E0);
+            label = "x" + stack.getCount();
+            glowColor = 0xFFE0E0E0;
         }
+
+        // 1. رسم Glow Frame ناعم وأنيق حول مجسم الدرع
+        drawGlowFrame(g, x - 1, y - 1, 18, 18, glowColor);
+
+        // 2. رسم مجسم الدرع نفسه ثلاثي الأبعاد
+        g.item(stack, x, y);
+
+        // 3. كتابة النسبة المئوية على يمين الأيقونة بوضوح
+        if (!label.isEmpty()) {
+            g.centeredText(font, Component.literal(label), x + 30, y + 5, glowColor);
+        }
+    }
+
+    // رسم إطار توهج نيون ناعم بخطوط متوهجة
+    private static void drawGlowFrame(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
+        int alpha = (color >> 24) & 0xFF;
+        int rgb = color & 0xFFFFFF;
+
+        // خلفية خفيفة جداً شفافة
+        int fillAlpha = (alpha * 35) / 255;
+        g.fill(x, y, x + w, y + h, (fillAlpha << 24) | 0x0A0F1D);
+
+        // حدود التوهج الخارجية
+        int borderAlpha = (alpha * 180) / 255;
+        int borderColor = (borderAlpha << 24) | rgb;
+
+        g.fill(x, y, x + w, y + 1, borderColor);         // أعلى
+        g.fill(x, y + h - 1, x + w, y + h, borderColor); // أسفل
+        g.fill(x, y, x + 1, y + h, borderColor);         // يسار
+        g.fill(x + w - 1, y, x + w, y + h, borderColor); // يمين
     }
 }

@@ -1,7 +1,6 @@
 package my.gearstatus.client;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -13,10 +12,10 @@ public class GearstatusClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        HudRenderCallback.EVENT.register((graphics, deltaTracker) -> renderGearHud(graphics));
+        // Render handled via GuiMixin
     }
 
-    private static void renderGearHud(GuiGraphicsExtractor graphics) {
+    public static void renderGearHud(GuiGraphicsExtractor graphics) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.isSpectator()) return;
 

@@ -2,6 +2,10 @@
   "required": true,
   "package": "my.gearstatus.client.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": [],
-  "injectors": { "defaultRequire": 1 }
+  "client": [
+    "GuiMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

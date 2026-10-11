@@ -19,7 +19,6 @@ public class GearstatusClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // تسجيل طبقة الـ HUD الرسمية في Fabric 26.3 بعد الـ Hotbar مباشرة
         HudElementRegistry.attachElementAfter(
             VanillaHudElements.HOTBAR,
             HUD_ID,
@@ -29,7 +28,7 @@ public class GearstatusClient implements ClientModInitializer {
 
     public static void renderGearHud(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.player.isSpectator() || mc.options.hideGui) return;
+        if (mc.player == null || mc.player.isSpectator()) return;
 
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
@@ -57,10 +56,8 @@ public class GearstatusClient implements ClientModInitializer {
     private static void drawSlot(GuiGraphicsExtractor g, Font font, ItemStack stack, int x, int y) {
         if (stack.isEmpty()) return;
 
-        // رسم مجسم الأداة ثلاثي الأبعاد مباشرة
         g.item(stack, x, y);
 
-        // حساب نسبة المتانة ولونها الديناميكي
         if (stack.isDamageableItem()) {
             int max = stack.getMaxDamage();
             int damage = stack.getDamageValue();

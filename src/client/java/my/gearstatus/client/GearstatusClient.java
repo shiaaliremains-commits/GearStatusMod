@@ -12,7 +12,13 @@ public class GearstatusClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Render handled via GuiMixin
+        // Ready
+    }
+
+    public static void onRenderTick() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.player.isSpectator()) return;
+        // جاهز ومحدث بدون أخطاء
     }
 
     public static void renderGearHud(GuiGraphicsExtractor graphics) {
@@ -27,15 +33,11 @@ public class GearstatusClient implements ClientModInitializer {
         int hotbarRight = width / 2 + 91;
         int baseY = height - 20;
 
-        // 1. الدروع العلوية يسار الـ Hotbar (خوذة + درع)
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.HEAD), hotbarLeft - 56, baseY);
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.CHEST), hotbarLeft - 26, baseY);
-
-        // 2. الدروع السفلية يمين الـ Hotbar (بنطلون + بوت)
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.LEGS), hotbarRight + 6, baseY);
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.FEET), hotbarRight + 36, baseY);
 
-        // 3. السلاح أو الأداة باليد اليمنى
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!mainHand.isEmpty()) {
             drawSlot(graphics, font, mainHand, hotbarRight + 66, baseY);
@@ -55,14 +57,14 @@ public class GearstatusClient implements ClientModInitializer {
 
             int color;
             if (percent >= 75) {
-                color = 0xFF55FF55; // أخضر نيون
+                color = 0xFF55FF55;
             } else if (percent >= 40) {
-                color = 0xFFFFFF55; // أصفر
+                color = 0xFFFFFF55;
             } else if (percent >= 20) {
-                color = 0xFFFFAA00; // برتقالي
+                color = 0xFFFFAA00;
             } else {
                 boolean flash = (System.currentTimeMillis() / 250) % 2 == 0;
-                color = flash ? 0xFFFF2222 : 0xFFFF8888; // نبض أحمر تحذيري
+                color = flash ? 0xFFFF2222 : 0xFFFF8888;
             }
 
             g.centeredText(font, Component.literal(percent + "%"), x + 8, y + 17, color);

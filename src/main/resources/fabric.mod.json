@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "gearstatus",
+  "version": "${version}",
+  "name": "GearStatus",
+  "description": "Minimalist modern armor and held-item durability HUD with dynamic health percentage colors.",
+  "authors": [
+    "shiaaliremains-commits"
+  ],
+  "contact": {
+    "homepage": "https://github.com/shiaaliremains-commits/GearStatusMod",
+    "sources": "https://github.com/shiaaliremains-commits/GearStatusMod"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/gearstatus/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "value": "my.gearstatus.Gearstatus",
+        "adapter": "kotlin"
+      }
+    ],
+    "client": [
+      {
+        "value": "my.gearstatus.client.GearstatusClient",
+        "adapter": "kotlin"
+      }
+    ]
+  },
+  "mixins": [
+    "gearstatus.mixins.json",
+    {
+      "config": "gearstatus.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*",
+    "fabric-language-kotlin": "*"
+  }
+}

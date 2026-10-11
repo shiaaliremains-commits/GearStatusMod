@@ -1,29 +1,35 @@
 package my.gearstatus.client;
 
+import my.gearstatus.Gearstatus;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 
 public class GearstatusClient implements ClientModInitializer {
 
+    private static final Identifier HUD_ID = Identifier.fromNamespaceAndPath(Gearstatus.MOD_ID, "hud");
+
     @Override
     public void onInitializeClient() {
-        // Ready
+        // تسجيل طبقة الـ HUD الرسمية في Fabric 26.3 بعد الـ Hotbar مباشرة
+        HudElementRegistry.attachElementAfter(
+            VanillaHudElements.HOTBAR,
+            HUD_ID,
+            GearstatusClient::renderGearHud
+        );
     }
 
-    public static void onRenderTick() {
+    public static void renderGearHud(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.player.isSpectator()) return;
-        // جاهز ومحدث بدون أخطاء
-    }
-
-    public static void renderGearHud(GuiGraphicsExtractor graphics) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.player.isSpectator()) return;
+        if (mc.player == null || mc.player.isSpectator() || mc.options.hideGui) return;
 
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
@@ -33,11 +39,15 @@ public class GearstatusClient implements ClientModInitializer {
         int hotbarRight = width / 2 + 91;
         int baseY = height - 20;
 
+        // 1. الدروع العلوية يسار الـ Hotbar (خوذة + درع)
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.HEAD), hotbarLeft - 56, baseY);
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.CHEST), hotbarLeft - 26, baseY);
+
+        // 2. الدروع السفلية يمين الـ Hotbar (بنطلون + بوت)
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.LEGS), hotbarRight + 6, baseY);
         drawSlot(graphics, font, mc.player.getItemBySlot(EquipmentSlot.FEET), hotbarRight + 36, baseY);
 
+        // 3. السلاح أو الأداة باليد اليمنى
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!mainHand.isEmpty()) {
             drawSlot(graphics, font, mainHand, hotbarRight + 66, baseY);
@@ -47,8 +57,10 @@ public class GearstatusClient implements ClientModInitializer {
     private static void drawSlot(GuiGraphicsExtractor g, Font font, ItemStack stack, int x, int y) {
         if (stack.isEmpty()) return;
 
+        // رسم مجسم الأداة ثلاثي الأبعاد مباشرة
         g.item(stack, x, y);
 
+        // حساب نسبة المتانة ولونها الديناميكي
         if (stack.isDamageableItem()) {
             int max = stack.getMaxDamage();
             int damage = stack.getDamageValue();
@@ -57,14 +69,14 @@ public class GearstatusClient implements ClientModInitializer {
 
             int color;
             if (percent >= 75) {
-                color = 0xFF55FF55;
+                color = 0xFF55FF55; // أخضر نيون
             } else if (percent >= 40) {
-                color = 0xFFFFFF55;
+                color = 0xFFFFFF55; // أصفر
             } else if (percent >= 20) {
-                color = 0xFFFFAA00;
+                color = 0xFFFFAA00; // برتقالي
             } else {
                 boolean flash = (System.currentTimeMillis() / 250) % 2 == 0;
-                color = flash ? 0xFFFF2222 : 0xFFFF8888;
+                color = flash ? 0xFFFF2222 : 0xFFFF8888; // نبض أحمر تحذيري
             }
 
             g.centeredText(font, Component.literal(percent + "%"), x + 8, y + 17, color);
